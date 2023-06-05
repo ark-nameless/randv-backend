@@ -1,15 +1,48 @@
-from typing import Union
+from fastapi import FastAPI, Depends
+from fastapi.middleware.cors import CORSMiddleware
 
-from fastapi import FastAPI
+from app.api.router import api_router
+from .database import tables
+from .database.database import engine, drop_table, get_db, SessionLocal
+from .config.config import settings
+from .utils.authentication import Authenticator
 
-app = FastAPI()
+tables.Base.metadata.create_all(bind=engine)
 
+app = FastAPI(title=settings.PROJECT_NAME, version=settings.PROJECT_VERSION)
 
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
+origins = [
+    '*',
+    "http://localhost",
+    # "http://localhost:8000",
+    "http://localhost:4201",
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
+app.include_router(api_router)
 
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: Union[str, None] = None):
-    return {"item_id": item_id, "q": q}
+@app.on_event('shutdown')
+async def on_app_shutdown():
+    # for tbl in reversed(tables.Base.metadata.sorted_tables):
+    #     drop_table(f"{tbl}")
+    pass
+
+@app.on_event('startup')
+async def on_app_startup():
+    # admin_user = tables.User(username='admin', 
+    #                          email='ark.nameless.zero@gmail.com', 
+    #                          password=Authenticator.hash_password('admin'),
+    #                          access=['admin', 'employee']
+    #                         )
+    # db = SessionLocal()
+    # db.add(admin_user)
+    # db.commit()
+    # db.refresh(admin_user)
+    # print(admin_user)
+    pass
