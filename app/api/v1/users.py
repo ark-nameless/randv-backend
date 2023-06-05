@@ -1,8 +1,7 @@
-from typing import Annotated
+from typing_extensions import Annotated
 from fastapi import APIRouter, status, HTTPException, Depends
 from fastapi.security import OAuth2PasswordRequestForm
-from fastapi.responses import RedirectResponse
-from app.schemas.users import UserInfo, UserAuth, TokenSchema, UserModel
+from app.schemas.users import UserAuth, TokenSchema, UserModel
 from app.utils.authentication import Authenticator
 from app.utils.jwt import (
     create_access_token,
@@ -45,7 +44,7 @@ async def login(db: DatabaseDep, form_data: Annotated[OAuth2PasswordRequestForm,
             detail="Incorrect email or password"
         )
 
-    if not Authenticator.verify_password(form_data.password, user.password):
+    if not Authenticator.verify_password(form_data.password, str(user.password)):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Incorrect email or password"

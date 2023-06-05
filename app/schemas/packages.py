@@ -1,8 +1,9 @@
+from typing import Union
 from uuid import UUID
 from pydantic import BaseModel, Field, validator
 
 class NewPackageSchema(BaseModel):
-    image: str | None = None
+    image: Union[str, None] = None
     content: str = Field(default='')
     day_fee: int = Field(ge=1)
     night_fee: int = Field(ge=1)

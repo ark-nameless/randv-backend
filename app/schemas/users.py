@@ -1,3 +1,4 @@
+from typing import List
 from uuid import UUID
 from pydantic import BaseModel, Field
 
@@ -13,7 +14,7 @@ class TokenPayload(BaseModel):
 class UserInfo(BaseModel):
     username: str
     email: str
-    access: list
+    access: List
     is_active: bool
 
 
@@ -21,7 +22,7 @@ class RegisterUser(BaseModel):
     username: str = Field(..., description="user username")
     email: str = Field(..., description="user email")
     password: str = Field(..., min_length=5, max_length=32, description="user password")
-    access: list = Field(..., description="user access control")
+    access: List[str] = Field(..., description="user access control")
 
 # class UserModel(BaseModel):
 #     id: int = Field(..., description="user id")
@@ -37,7 +38,7 @@ class UserModel(BaseModel):
     username: str
     email: str
     password: str
-    access: list
+    access: List
     is_active: bool
     reset_token: str
 

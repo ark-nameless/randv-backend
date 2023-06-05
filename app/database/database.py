@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing_extensions import Annotated
 
 from fastapi import Depends
 from sqlalchemy import MetaData, create_engine
@@ -6,9 +6,6 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 
 from app.config.config import settings
-
-# SQLALCHEMY_DATABASE_URL = "sqlite:///./sql_app.db"
-# SQLALCHEMY_DATABASE_URL = "postgresql://postgres:09991138136@192.168.123.34/fastapi_samples"
 
 engine = create_engine(
     settings.DATABASE_URL
