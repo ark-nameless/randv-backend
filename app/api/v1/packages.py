@@ -18,7 +18,7 @@ router = APIRouter()
 async def get_all_packages(db: DatabaseDep):
     all_packages = []
     for package in db.query(tables.Package):
-        all_packages.append(PackageSchema(**package.__dict__))
+        all_packages.append(PackageSchema(**package.__dict__)) #type: ignore
 
     return all_packages
 
