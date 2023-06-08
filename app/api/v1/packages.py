@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Body, Depends
+from fastapi import APIRouter, Body, Depends, HTTPException, status
 from app.schemas.packages import NewPackageSchema, PackageSchema
 from app.schemas.users import UserModel
 from app.database.database import DatabaseDep
@@ -21,6 +21,23 @@ async def get_all_packages(db: DatabaseDep):
         all_packages.append(PackageSchema(**package.__dict__)) #type: ignore
 
     return all_packages
+
+@router.get(
+    '/{id}',
+    summary='get package by id',
+    response_model=PackageSchema
+)
+async def get_package_by_id(id: str, db: DatabaseDep):
+    package = db.query(tables.Package).filter(tables.Package.id == id).first()
+
+    if not package:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Package with not found."
+        )
+
+    return PackageSchema(**package.__dict__)
+
 
 @router.post(
     '', 

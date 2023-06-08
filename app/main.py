@@ -1,7 +1,9 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.router import api_router
+from app.exceptions.exceptions import JSONException
 from .database import tables
 from .database.database import engine, drop_table, get_db, SessionLocal
 from .config.config import settings
@@ -25,7 +27,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.exception_handler(JSONException)
+async def unicorn_exception_handler(request: Request, exc: JSONException):
+    return JSONResponse(
+        status_code=exc.code,
+        content=exc.data,
+    )
+
 app.include_router(api_router)
+
 
 @app.on_event('shutdown')
 async def on_app_shutdown():

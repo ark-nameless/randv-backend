@@ -1,7 +1,8 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, DateTime, Date, JSON
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, DateTime, Date, JSON, TIME
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.types import ARRAY
+from sqlalchemy.sql import func
 import uuid
 
 from .database import Base
@@ -22,11 +23,15 @@ class Package(Base):
     __tablename__ = "packages"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String)
     image = Column(String)
     content = Column(String)
+
     day_fee = Column(Integer)
     night_fee = Column(Integer)
     whole_day = Column(Integer)
+    
+    plans = Column(ARRAY(JSON), nullable=True, default=[])
 
 class Accomodation(Base):
     __tablename__ = "accomodations"
@@ -56,26 +61,59 @@ class Reservation(Base):
     __tablename__ = "reservations"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    customer_name = Column(String)
-    contact_no = Column(String)
-    email = Column(String)
-    type = Column(String)
-    package_id = Column(String)
-
-    arrival = Column(DateTime(timezone=True))
-    departure = Column(DateTime(timezone=True))
-    guest_count = Column(Integer)
-    payment = Column(Integer, default = 0)
-    total_amount = Column(Integer)
     
-    checked_in = Column(DateTime(timezone=True))
-    checkout = Column(DateTime(timezone=True))
+    customer_name = Column(String)
+    email = Column(String)
+    contact_no = Column(String)
 
-    selected_accomodations = Column(ARRAY(JSON))
-    guest_entrace = Column(ARRAY(JSON))
+    type = Column(String)
+    package_id = Column(String, nullable=True)
+    selected_time = Column(String, nullable=True)
+
+    guest_count = Column(Integer)
+    arrival = Column(String, default='', nullable=True)
+    departure = Column(String, default='', nullable=True)
+
+    payment = Column(Integer, default=0)
+    total_amount = Column(Integer)
+    reference_no = Column(String)
+
+    guest_data = Column(ARRAY(JSON))
+    reservation_data = Column(ARRAY(JSON))
+
+    checked_in = Column(DateTime(timezone=True), nullable=True)
+    checkout = Column(DateTime(timezone=True), nullable=True)
 
     payed = Column(Boolean, default=False)
     status = Column(Boolean, default=True)
-    extras = Column(String)
+    extras = Column(String, nullable=True)
+
+class Comment(Base):
+    __tablename__ = 'comments'
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    comment = Column(String)
+    status = Column(Boolean)
+
+
+class Review(Base):
+    __tablename__ = "reviews"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    reservation_id = Column(String)
+    review = Column(String)
+    rating = Column(Integer, nullable=True)
+    review_date = Column(DateTime, server_default=func.now())
+    is_reviewed = Column(Boolean, default=False)
+
+class CancelRequest(Base):
+    __tablename__ = "cancel_requests"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    reservation_id = Column(String)
+    reason = Column(String)
+    status = Column(String, default="actionable") # approved, rejected, actionable
+    notes = Column(String, default='')
+
 
 
