@@ -5,7 +5,7 @@ from app.schemas.entrance_fees import NewEntraceFeeSchema, EntraceFeeSchema
 from app.schemas.users import UserModel
 from app.database.database import DatabaseDep
 from app.database import tables
-from app.utils.deps import get_current_user
+from app.utils.deps import get_current_active_user
 
 router = APIRouter()
 
@@ -27,7 +27,7 @@ async def get_all_entrace_fees(db: DatabaseDep):
     summary='create new entrace fee', 
     response_model=EntraceFeeSchema
 )
-async def create_new_entrace_fee(db: DatabaseDep, payload: NewEntraceFeeSchema = Body(...), user: UserModel = Depends(get_current_user)):
+async def create_new_entrace_fee(db: DatabaseDep, payload: NewEntraceFeeSchema = Body(...), user: UserModel = Depends(get_current_active_user)):
     if not payload.whole_day:
         payload.whole_day = payload.day_fee + payload.night_fee
 

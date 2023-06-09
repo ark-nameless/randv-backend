@@ -5,7 +5,7 @@ from app.schemas.comments import NewCommentSchema, CommentSchema
 from app.schemas.users import UserModel
 from app.database.database import DatabaseDep
 from app.database import tables
-from app.utils.deps import get_current_user
+from app.utils.deps import get_current_active_user
 
 router = APIRouter()
 
@@ -40,7 +40,7 @@ async def create_new_comment(db: DatabaseDep, payload: NewCommentSchema = Body(.
     '/toggle/{id}',
     summary='toggle comment status'
 )
-async def toggle_comment_status(db: DatabaseDep, id: str, user: UserModel = Depends(get_current_user)):
+async def toggle_comment_status(db: DatabaseDep, id: str, user: UserModel = Depends(get_current_active_user)):
     found = db.query(tables.Comment).filter(tables.Comment.id == id).first()
 
     if not found:

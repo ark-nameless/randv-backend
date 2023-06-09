@@ -9,7 +9,8 @@ from app.database.database import DatabaseDep
 from app.exceptions.exceptions import JSONException
 from app.database import tables
 import pprint
-from app.utils.deps import get_current_user
+from app.utils.deps import get_current_active_user
+from app.utils.mailer import Mailer
 
 router = APIRouter()
 
@@ -46,12 +47,29 @@ def str_to_date(val):
     return datetime.strptime(val.split(' ')[0], '%m/%d/%Y')
 
 
+
+@router.get(
+    '/valid/{id}',
+    summary="Check if the id is a valid reservation"
+)
+async def check_if_reservation_id_is_valid(id: str, db: DatabaseDep) :
+    try:
+        found = db.query(tables.Reservation).filter(tables.Reservation.id == id).first()
+        
+        if not found:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Reservation ID not found")
+    except:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid ID")
+    
+    return []
+
+
 @router.get(
     '', 
     summary='get all reservations', 
     response_model=List[dict]
 )
-async def get_all_reservations(db: DatabaseDep, user: UserModel = Depends(get_current_user)):
+async def get_all_reservations(db: DatabaseDep, user: UserModel = Depends(get_current_active_user)):
     all_reservations = []
     for package in db.query(tables.Reservation):
         all_reservations.append(dict(**package.__dict__)) #type: ignore
@@ -231,6 +249,10 @@ async def create_new_package_reservation(db: DatabaseDep, payload: NewPackageRes
     db.commit()
     db.refresh(db_reservation)
 
+    mail = Mailer()
+    content = Mailer.generate_package_reservation_email(db_reservation.customer_name, db_reservation.arrival, db_reservation.departure, db_reservation.id)
+    mail.send(db_reservation.email, "Thank you for your Selecting our resort for you vacation", content)
+
     return db_reservation
 
 @router.post(
@@ -295,7 +317,7 @@ async def create_new_individual_reservation(db: DatabaseDep, payload: dict = Bod
     '/checkin/{id}', 
     summary='set current timestamp to customer checkin status', 
 )
-async def check_in_guest_with_id(id: str, db: DatabaseDep, user: UserModel = Depends(get_current_user)):
+async def check_in_guest_with_id(id: str, db: DatabaseDep, user: UserModel = Depends(get_current_active_user)):
     db_reservation = db.query(tables.Reservation).filter(tables.Reservation.id == id).first()
 
     if not db_reservation:
@@ -312,7 +334,7 @@ async def check_in_guest_with_id(id: str, db: DatabaseDep, user: UserModel = Dep
     '/checkout/{id}', 
     summary='set current timestamp to customer checkout status', 
 )
-async def check_out_guest_with_id(id: str, db: DatabaseDep, user: UserModel = Depends(get_current_user)):
+async def check_out_guest_with_id(id: str, db: DatabaseDep, user: UserModel = Depends(get_current_active_user)):
     db_reservation = db.query(tables.Reservation).filter(tables.Reservation.id == id).first()
 
     if not db_reservation:
@@ -330,8 +352,14 @@ async def check_out_guest_with_id(id: str, db: DatabaseDep, user: UserModel = De
     '/cancel/{id}', 
     summary='cancel reservation', 
 )
-async def cancel_reservation(id: str, db: DatabaseDep, user: UserModel = Depends(get_current_user)):
+async def cancel_reservation(id: str, db: DatabaseDep, user: UserModel = Depends(get_current_active_user)):
     db_reservation = db.query(tables.Reservation).filter(tables.Reservation.id == id).first()
+
+    if not 'admin' in user.access :
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='Insufficient access level'
+        )
 
     if not db_reservation:
         raise HTTPException(
@@ -350,8 +378,14 @@ async def cancel_reservation(id: str, db: DatabaseDep, user: UserModel = Depends
     '/paid/toggle/{id}', 
     summary='change paid status', 
 )
-async def toggle_payment_reservation_status(id: str, db: DatabaseDep, user: UserModel = Depends(get_current_user)):
+async def toggle_payment_reservation_status(id: str, db: DatabaseDep, user: UserModel = Depends(get_current_active_user)):
     db_reservation = db.query(tables.Reservation).filter(tables.Reservation.id == id).first()
+
+    if not 'admin' in user.access:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Insufficient access level"
+        )
 
     if not db_reservation:
         raise HTTPException(

@@ -1,5 +1,6 @@
+from typing import List
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, DateTime, Date, JSON, TIME
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.types import ARRAY
 from sqlalchemy.sql import func
@@ -11,13 +12,24 @@ from .database import Base
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id:Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
     email = Column(String, unique=True, index=True)
     password = Column(String)
     access = Column(ARRAY(String))
     is_active = Column(Boolean, default=True)
     reset_token = Column(String, default='')
+
+    logouts: Mapped[List["LogoutRecords"]] = relationship(back_populates="user")
+
+class LogoutRecords(Base):
+    __tablename__ = "logout_records"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id = mapped_column(ForeignKey("users.id"))
+    user = relationship('User', back_populates='logouts')
+
+    
 
 class Package(Base):
     __tablename__ = "packages"
@@ -113,6 +125,7 @@ class CancelRequest(Base):
     reservation_id = Column(String)
     reason = Column(String)
     status = Column(String, default="actionable") # approved, rejected, actionable
+    refund_amount = Column(Integer)
     notes = Column(String, default='')
 
 

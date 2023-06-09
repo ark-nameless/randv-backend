@@ -1,4 +1,6 @@
-import smtplib, ssl
+import smtplib
+from email.mime.text import MIMEText
+
 from email.message import EmailMessage
 from email.headerregistry import Address
 from email.utils import make_msgid
@@ -18,23 +20,19 @@ class Mailer:
         try :
             msg = EmailMessage()
             msg['Subject'] = subject
-            msg['From'] = Address("MSEUFCI Class Scheduling", "class_schedules", self.sender_mail)
+            msg['From'] = Address("R & V Private Resort", "Reservation Confirmation", self.sender_mail)
             msg['To'] = email 
-            msg.set_content(content)
+            msg.set_content(content, subtype='html')
 
-            server = smtplib.SMTP(self.smtp_server_domain_name, self.port)
-
-            server.ehlo()
-            server.starttls()
-            server.ehlo()
-            server.login(self.sender_mail, self.pasword)
-
-            server.send_message(msg)
+            with smtplib.SMTP_SSL(self.smtp_server_domain_name, int(self.port)) as server: 
+                # server.starttls()
+                server.login(self.sender_mail, self.pasword)
+                server.send_message(msg)
+                
+            print(msg)
 
         except Exception as e: 
             print(e)
-        finally: 
-            server.quit() #type: ignore
 
 
     def send_(self, email, token): 
@@ -83,7 +81,7 @@ class Mailer:
             server.send_message(msg)
 
     @staticmethod
-    def generate_package_reservation_email(customer_name, arrival_date, departure_date, num_guests, room_type):
+    def generate_package_reservation_email(customer_name, arrival_date, departure_date, id):
         amenities = [
             "Adult Swimming Pool"
             "Kiddie Pool"
@@ -115,7 +113,7 @@ class Mailer:
         <html>
         <head></head>
         <body>
-            <p><strong>Subject:</strong> Reservation Confirmation - R & V Private Resort - {arrival_date} to {departure_date}</p>
+            <p><strong>Subject:</strong> Reservation Confirmation - R & V Private Resort - {arrival_date} to {departure_date} - Reservation Id: {id}</p>
             <br>
             <p>Dear {customer_name},</p>
             <br>
@@ -124,15 +122,11 @@ class Mailer:
             <p><strong>Arrival Date:</strong> {arrival_date}</p>
             <p><strong>Departure Date:</strong> {departure_date}</p>
             <br>
-            <p><strong>Number of Guests:</strong> {num_guests}</p>
-            <br>
-            <p><strong>Accommodation:</strong> {room_type}</p>
-            <br>
             <p>We are excited to welcome you to our luxurious resort and ensure that your stay with us is nothing short of exceptional. Our dedicated staff is committed to providing personalized service and creating unforgettable memories for our esteemed guests.</p>
             <br>
             <p>As a guest at R & V Private Resort, you will have access to our premium amenities, including:</p>
             <ul>
-                {amenities_list}
+                <li>{amenities_list}</li>
             </ul>
             <br>
             <p>Should you require any additional information or have specific preferences, please do not hesitate to contact our concierge desk at [resort contact number] or via email at [resort email address].</p>
@@ -144,13 +138,115 @@ class Mailer:
             <br>
             <p><strong>Cancellation Policy:</strong></p>
             <ul>
-                <li>Cancellations made [number of days] or more prior to the arrival date are eligible for a full refund of the deposit.</li>
-                <li>Cancellations made within [number of days] of the arrival date will result in the forfeiture of the deposit.</li>
+                <li>Cancellations request are subject for approval in which the amount of refund may vary.</li>
             </ul>
             <br>
             <p>Once again, we are thrilled that you have chosen R & V Private Resort for your upcoming getaway. We are confident that your stay will exceed your expectations, leaving you with cherished memories. If you have any questions or need further assistance, please feel free to reach out to us.</p>
             <br>
             <p>We look forward to welcoming you to R & V Private Resort and providing you with an unforgettable experience.</p>
+            <br>
+            <p>Warm regards,</p>
+            <p>If you want to cancel your reservation, Please follow this link to apply for cancellation</p>
+            <a href="{settings.FRONTEND_URL}/cancel/{id}">Cancel Reservation</a>
+        </body>
+        </html>
+        """
+
+        return html_template
+    
+    def generate_cancellation_response_email(customer_name, reservation_number, arrival_date, departure_date):
+        html_template = f"""
+        <html>
+        <head></head>
+        <body>
+            <p><strong>Subject:</strong> Reservation Cancellation Request - {reservation_number}</p>
+            <br>
+            <p>Dear {customer_name},</p>
+            <br>
+            <p>We have received your request to cancel your reservation at R & V Private Resort. We understand that circumstances may arise that necessitate a change in your travel plans, and we are here to assist you.</p>
+            <br>
+            <p>After reviewing your reservation details, we will inform you if you can receive the full amount of refund or incure some penalty</p>
+            <br>
+            <p><strong>Reservation Number:</strong> {reservation_number}</p>
+            <p><strong>Arrival Date:</strong> {arrival_date}</p>
+            <p><strong>Departure Date:</strong> {departure_date}</p>
+            <br>
+            <p><strong>Cancellation Policy:</strong></p>
+            <ul>
+                <li>Cancellation requests are subject to approval, and the amount of refund may vary.</li>
+            </ul>
+            <br>
+            <p>Please note that the cancellation charges are based on our resort's cancellation policy and are necessary to compensate for the reserved accommodations and services that were being held exclusively for your stay.</p>
+            <br>
+            <p>To proceed with the cancellation, kindly confirm your acceptance of the applicable charges by replying to this email. Upon confirmation, we will initiate the refund process or, if applicable, provide you with a detailed breakdown of the cancellation fees.</p>
+            <br>
+            <p>Should you have any further questions or concerns, please do not hesitate to reach out to us. We value your patronage and are committed to providing the utmost support during this process.</p>
+            <br>
+            <p>Thank you for your understanding, and we hope to have the opportunity to welcome you back to R & V Private Resort in the future.</p>
+            <br>
+        </body>
+        </html>
+        """
+
+        return html_template
+
+    def generate_rejected_cancellation_response_email(customer_name, reservation_number, arrival_date, departure_date, rejection_notes):
+        html_template = f"""
+        <html>
+        <head></head>
+        <body>
+            <p><strong>Subject:</strong> Reservation Cancellation Request - {reservation_number}</p>
+            <br>
+            <p>Dear {customer_name},</p>
+            <br>
+            <p>We have carefully reviewed your cancellation request for reservation {reservation_number} at R & V Private Resort.</p>
+            <br>
+            <p>Unfortunately, we are unable to approve your cancellation at this time. The details of your reservation are as follows:</p>
+            <br>
+            <p><strong>Reservation Number:</strong> {reservation_number}</p>
+            <p><strong>Arrival Date:</strong> {arrival_date}</p>
+            <p><strong>Departure Date:</strong> {departure_date}</p>
+            <br>
+            <p><strong>Rejection Notes:</strong></p>
+            <p>{rejection_notes}</p>
+            <br>
+            <p>We understand that circumstances may change, and we apologize for any inconvenience caused. If you have any further questions or concerns, please do not hesitate to reach out to us.</p>
+            <br>
+            <p>Thank you for your understanding, and we hope to have the opportunity to welcome you to R & V Private Resort in the future.</p>
+            <br>
+        </body>
+        </html>
+        """
+
+        return html_template
+
+
+    def generate_accepted_cancellation_response_email(customer_name, reservation_number, arrival_date, departure_date, refund_amount, additional_notes):
+        html_template = f"""
+        <html>
+        <head></head>
+        <body>
+            <p><strong>Subject:</strong> Reservation Cancellation Request - {reservation_number}</p>
+            <br>
+            <p>Dear {customer_name},</p>
+            <br>
+            <p>We have processed your cancellation request for reservation {reservation_number} at R & V Private Resort.</p>
+            <br>
+            <p>The details of your canceled reservation are as follows:</p>
+            <br>
+            <p><strong>Reservation Number:</strong> {reservation_number}</p>
+            <p><strong>Arrival Date:</strong> {arrival_date}</p>
+            <p><strong>Departure Date:</strong> {departure_date}</p>
+            <p><strong>Number of Guests:</strong> {num_guests}</p>
+            <br>
+            <p>We are pleased to inform you that a refund in the amount of {refund_amount} has been initiated. The refund will be processed according to the original payment method used during the reservation.</p>
+            <br>
+            <p><strong>Additional Notes:</strong></p>
+            <p>{rejection_notes}</p>
+            <br>
+            <p>If you have any further questions or concerns, please do not hesitate to reach out to us. We value your patronage and look forward to the opportunity to serve you in the future.</p>
+            <br>
+            <p>Thank you for choosing R & V Private Resort.</p>
             <br>
             <p>Warm regards,</p>
             <p>[Resort Manager's Name]</p>

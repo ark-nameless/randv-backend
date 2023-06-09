@@ -26,11 +26,11 @@ class NewPackageReservationSchema(BaseModel):
 
 class NewReservationCancellation(BaseModel):
     reservation_id: constr(min_length=6)
-    reason = constr(min_length=6)
+    reason: constr(min_length=6)
 
 class ReservationCancellation(NewReservationCancellation):
     id: str
-    status = constr(min_length=6) # approved, rejected, actionable
+    status: constr(min_length=6) # approved, rejected, actionable
     notes: str = ''
 
 # class EntraceFeeSchema(NewEntraceFeeSchema):

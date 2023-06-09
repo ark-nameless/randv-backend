@@ -9,7 +9,7 @@ from app.utils.jwt import (
 )
 from app.database.database import DatabaseDep
 from app.database import tables
-from app.utils.deps import get_current_user
+from app.utils.deps import get_current_active_user
 
 from fastapi.encoders import jsonable_encoder
 
@@ -63,5 +63,5 @@ async def login(db: DatabaseDep, form_data: Annotated[OAuth2PasswordRequestForm,
     }
 
 @router.get('/me', summary='Get details of currently logged in user', response_model=UserModel)
-async def get_me(user: UserModel = Depends(get_current_user)):
+async def get_me(user: UserModel = Depends(get_current_active_user)):
     return user

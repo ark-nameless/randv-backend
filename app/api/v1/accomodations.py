@@ -5,7 +5,7 @@ from app.schemas.accomodations import NewAccomodationSchema, AccomodationSchema
 from app.schemas.users import UserModel
 from app.database.database import DatabaseDep
 from app.database import tables
-from app.utils.deps import get_current_user
+from app.utils.deps import get_current_active_user
 
 router = APIRouter()
 
@@ -27,7 +27,7 @@ async def get_all_accomodations(db: DatabaseDep):
     summary='create new accomodations', 
     response_model=AccomodationSchema
 )
-async def create_new_accomodation(db: DatabaseDep, payload: NewAccomodationSchema = Body(...), user: UserModel = Depends(get_current_user)):
+async def create_new_accomodation(db: DatabaseDep, payload: NewAccomodationSchema = Body(...), user: UserModel = Depends(get_current_active_user)):
     if not payload.whole_day or not payload.whole_day == 0:
         payload.whole_day = payload.day_fee + payload.night_fee
 
