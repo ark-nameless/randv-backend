@@ -310,6 +310,10 @@ async def create_new_individual_reservation(db: DatabaseDep, payload: dict = Bod
     db.commit()
     db.refresh(db_reservation)
 
+    mail = Mailer()
+    content = Mailer.generate_package_reservation_email(db_reservation.customer_name, db_reservation.arrival, db_reservation.departure, db_reservation.id)
+    mail.send(db_reservation.email, "Thank you for your Selecting our resort for you vacation", content)
+
     return db_reservation
 
 
