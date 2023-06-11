@@ -125,7 +125,7 @@ class CancelRequest(Base):
     reservation_id = Column(String)
     reason = Column(String)
     status = Column(String, default="actionable") # approved, rejected, actionable
-    refund_amount = Column(Integer)
+    refund_amount = Column(Integer, default=0)
     notes = Column(String, default='')
 
 

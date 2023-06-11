@@ -33,6 +33,11 @@ class ReservationCancellation(NewReservationCancellation):
     status: constr(min_length=6) # approved, rejected, actionable
     notes: str = ''
 
+class SetReservationPayment(BaseModel):
+    payed: bool
+    payment: int
+    total_amount: int
+
 # class EntraceFeeSchema(NewEntraceFeeSchema):
 #     id: UUID
 

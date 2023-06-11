@@ -3,7 +3,7 @@ from collections import defaultdict
 
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Body, Depends, status, HTTPException
-from app.schemas.reservations import NewReservationIndividualSchema, NewPackageReservationSchema
+from app.schemas.reservations import NewReservationIndividualSchema, NewPackageReservationSchema, SetReservationPayment
 from app.schemas.users import UserModel
 from app.database.database import DatabaseDep
 from app.exceptions.exceptions import JSONException
@@ -46,6 +46,11 @@ def str_to_datetime(val):
 def str_to_date(val):
     return datetime.strptime(val.split(' ')[0], '%m/%d/%Y')
 
+def date_in_range(arrival1, departure1, arrival2,  departure2):
+    return str_to_date(arrival1) <= str_to_date(arrival2) < str_to_date(departure1) or \
+    str_to_date(arrival1) <= str_to_date(departure2) < str_to_date(departure1) or \
+    str_to_date(arrival2) <= str_to_date(arrival1) < str_to_date(departure2) or \
+    str_to_date(arrival2) <= str_to_date(departure1) < str_to_date(departure2)
 
 
 @router.get(
@@ -63,6 +68,22 @@ async def check_if_reservation_id_is_valid(id: str, db: DatabaseDep) :
     
     return []
 
+
+@router.get(
+    '/{id}',
+    summary="Check if the id is a valid reservation"
+)
+async def get_reservation_by_id(id: str, db: DatabaseDep, user: UserModel = Depends(get_current_active_user)) :
+    found = None
+    try:
+        found = db.query(tables.Reservation).filter(tables.Reservation.id == id).first()
+        
+        if not found:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Reservation ID not found")
+    except:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid ID")
+    
+    return found
 
 @router.get(
     '', 
@@ -95,7 +116,6 @@ async def check_if_reservation_is_available(db: DatabaseDep, payload: dict = Bod
 
     departure = datetime.strptime(departure, '%m/%d/%Y')
     departure = datetime.strftime(departure, '%m/%d/%Y')
-    # db_reservations = db.query(tables.Reservation).filter(tables.Reservation.arrival.ilike(f'%{date}%')).all() # type: ignore
     db_reservations = db.query(tables.Reservation).filter(tables.Reservation.status == True).all()
 
     same_day_reservation = [reservation for reservation in db_reservations if date in reservation.arrival]
@@ -103,9 +123,9 @@ async def check_if_reservation_is_available(db: DatabaseDep, payload: dict = Bod
     # Checking customer infos
     if not 'selected_time' in payload and not 'selected_accomodations' in payload:
         for reservation in db_reservations:
-            if str_to_date(reservation.arrival) < str_to_date(arrival) < str_to_date(reservation.departure) or \
-                str_to_date(reservation.arrival) < str_to_date(departure) < str_to_date(reservation.departure):
-                print('error')
+            # print(f'{str_to_date(reservation.arrival)} <= {str_to_date(arrival)} <= {str_to_date(reservation.departure)}')
+
+            if date_in_range(reservation.arrival, reservation.departure, arrival, departure):
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
                     detail="Reservation with Selected date and time isn't available, please selecte new date or time"
@@ -136,7 +156,6 @@ async def check_if_reservation_is_available(db: DatabaseDep, payload: dict = Bod
         for accomodation in db_accomodations:
             list_of_accomodations[str(accomodation.id)] = accomodation.quantity
 
-        pprint.pprint(list_of_accomodations)
 
         for reservation in db_reservations: 
             if payload['type'] == 'individual':
@@ -168,17 +187,6 @@ async def check_if_reservation_is_available(db: DatabaseDep, payload: dict = Bod
             if reservation.type == 'package' and payload['type'] == 'package':
                 selected_package = db.query(tables.Package).filter(tables.Package.id == payload['package_id']).first()
                 selected_plan = [package for package in selected_package.plans if package['type'] == payload['selected_time']][0]
-
-                # if reservation.selected_time == 'whole':
-                #     raise HTTPException(
-                #         status_code=status.HTTP_409_CONFLICT,
-                #         detail="Reservation with Selected date and time isn't available, please selecte new date or time"
-                #     )
-                # elif reservation.selected_time == payload['selected_time']:
-                #     raise HTTPException(
-                #         status_code=status.HTTP_409_CONFLICT,
-                #         detail="Reservation with Selected date and time isn't available, please selecte new date or time"
-                #     )
                 if date_in_range(reservation.arrival, reservation.departure, arrival):
                     if reservation.type != payload['type']:
                         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Reservation with Selected date and time isn't available, please selecte new date or time")
@@ -195,23 +203,13 @@ async def check_if_reservation_is_available(db: DatabaseDep, payload: dict = Bod
                         print("date_in_range(reservation_plan['start_time'], reservation_plan['end_time'], departure): package")
                         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Reservation with Selected date and time isn't available, please selecte new date or time")
                     
-                if str_to_date(reservation.arrival) < str_to_date(arrival) < str_to_date(reservation.departure) or \
-                    str_to_date(reservation.arrival) < str_to_date(departure) < str_to_date(reservation.departure):
+                if date_in_range(reservation.arrival, reservation.departure, arrival, departure):
                     if reservation.selected_time == 'whole' or reservation.selected_time == payload['selected_time'] or \
                         payload['selected_time'] == 'whole':
                         raise HTTPException(
                             status_code=status.HTTP_409_CONFLICT,
                             detail="Reservation with Selected date and time isn't available, please selecte new date or time"
                         )
-                        
-            else: 
-                reservations = reservation.reservation_data
-                print(reservations)
-
-        pass
-
-
-    print(date)
 
     return []
 
@@ -221,7 +219,9 @@ async def check_if_reservation_is_available(db: DatabaseDep, payload: dict = Bod
     summary='create new package reservation', 
     # response_model=NewReservationIndividualSchema
 )
-async def create_new_package_reservation(db: DatabaseDep, payload: NewPackageReservationSchema):
+async def create_new_package_reservation(db: DatabaseDep, 
+                                         id: str, 
+                                         payload: NewPackageReservationSchema):
     arrival = payload.arrival
     departure = payload.departure if payload.departure else payload.arrival
 
@@ -240,6 +240,7 @@ async def create_new_package_reservation(db: DatabaseDep, payload: NewPackageRes
         'selected_time': payload.selected_time,
         'total_amount': selected_plan['price'], # type: ignore
         'reference_no': payload.reference_no,
+        'package_id': payload.package_id,
     }
 
     pprint.pprint(reservation_info)
@@ -350,6 +351,12 @@ async def check_out_guest_with_id(id: str, db: DatabaseDep, user: UserModel = De
     db_reservation.checkout = datetime.now()
     db_reservation.status = False
     db.commit()
+
+    mailer = Mailer()
+
+    content = mailer.generate_check_out_thank_you_email(db_reservation.email, db_reservation.id)
+    mailer.send(db_reservation.email, "R & V Private Resort Checkout", content)
+
     return []
 
 @router.put(
@@ -399,5 +406,57 @@ async def toggle_payment_reservation_status(id: str, db: DatabaseDep, user: User
     pay_status = db_reservation.payed
     db_reservation.payed = not pay_status
     db_reservation.status = not pay_status
+
+    if db_reservation.status:
+        db_reservation.payment = db_reservation.total_amount
+    else:
+        db_reservation.payment = 0
     db.commit()
+
     return []
+
+
+@router.put(
+    '/payment/{id}', 
+    summary='Set payment for reservation by reservation id', 
+)
+async def toggle_payment_reservation_status(id: str, db: DatabaseDep,
+                                            payload: SetReservationPayment = Body(...),
+                                            user: UserModel = Depends(get_current_active_user)):
+
+    db_reservation = None
+
+    try:
+        db_reservation = db.query(tables.Reservation).filter(tables.Reservation.id == id).first()
+    except: 
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid Reservation ID")
+
+    if not 'admin' in user.access:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Insufficient access level"
+        )
+
+    if not db_reservation:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='Reservation with given id not found',
+        )
+    
+    db_reservation.payed = payload.payed
+    db_reservation.payment = payload.payment
+    db_reservation.total_amount = payload.total_amount
+    db.commit()
+
+    mailer = Mailer()
+    content = mailer.generate_payment_accepted_email(db_reservation.customer_name, db_reservation.id, db_reservation.payment)
+
+    mailer.send(db_reservation.email, "R & V Private Resort Payment Accepted", content)
+
+    return db_reservation
+
+
+
+
+
+

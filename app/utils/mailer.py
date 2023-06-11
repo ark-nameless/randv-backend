@@ -119,8 +119,8 @@ class Mailer:
             <br>
             <p>Thank you for choosing to stay at R & V Private Resort. We are delighted to confirm your reservation for the following dates:</p>
             <br>
-            <p><strong>Arrival Date:</strong> {arrival_date}</p>
-            <p><strong>Departure Date:</strong> {departure_date}</p>
+            <p><strong>Check In Date:</strong> {arrival_date}</p>
+            <p><strong>Check Out Date:</strong> {departure_date}</p>
             <br>
             <p>We are excited to welcome you to our luxurious resort and ensure that your stay with us is nothing short of exceptional. Our dedicated staff is committed to providing personalized service and creating unforgettable memories for our esteemed guests.</p>
             <br>
@@ -154,7 +154,7 @@ class Mailer:
 
         return html_template
     
-    def generate_cancellation_response_email(customer_name, reservation_number, arrival_date, departure_date):
+    def generate_cancellation_response_email(self, customer_name, reservation_number, arrival_date, departure_date):
         html_template = f"""
         <html>
         <head></head>
@@ -168,8 +168,8 @@ class Mailer:
             <p>After reviewing your reservation details, we will inform you if you can receive the full amount of refund or incure some penalty</p>
             <br>
             <p><strong>Reservation Number:</strong> {reservation_number}</p>
-            <p><strong>Arrival Date:</strong> {arrival_date}</p>
-            <p><strong>Departure Date:</strong> {departure_date}</p>
+            <p><strong>Check In Date:</strong> {arrival_date}</p>
+            <p><strong>Check Out Date:</strong> {departure_date}</p>
             <br>
             <p><strong>Cancellation Policy:</strong></p>
             <ul>
@@ -190,7 +190,7 @@ class Mailer:
 
         return html_template
 
-    def generate_rejected_cancellation_response_email(customer_name, reservation_number, arrival_date, departure_date, rejection_notes):
+    def generate_rejected_cancellation_response_email(self, customer_name, reservation_number, arrival_date, departure_date, rejection_notes):
         html_template = f"""
         <html>
         <head></head>
@@ -204,8 +204,8 @@ class Mailer:
             <p>Unfortunately, we are unable to approve your cancellation at this time. The details of your reservation are as follows:</p>
             <br>
             <p><strong>Reservation Number:</strong> {reservation_number}</p>
-            <p><strong>Arrival Date:</strong> {arrival_date}</p>
-            <p><strong>Departure Date:</strong> {departure_date}</p>
+            <p><strong>Check In Date:</strong> {arrival_date}</p>
+            <p><strong>Check Out Date:</strong> {departure_date}</p>
             <br>
             <p><strong>Rejection Notes:</strong></p>
             <p>{rejection_notes}</p>
@@ -221,7 +221,7 @@ class Mailer:
         return html_template
 
 
-    def generate_accepted_cancellation_response_email(customer_name, reservation_number, arrival_date, departure_date, refund_amount, additional_notes):
+    def generate_accepted_cancellation_response_email(self, customer_name, reservation_number, arrival_date, departure_date, refund_amount, additional_notes):
         html_template = f"""
         <html>
         <head></head>
@@ -235,23 +235,71 @@ class Mailer:
             <p>The details of your canceled reservation are as follows:</p>
             <br>
             <p><strong>Reservation Number:</strong> {reservation_number}</p>
-            <p><strong>Arrival Date:</strong> {arrival_date}</p>
-            <p><strong>Departure Date:</strong> {departure_date}</p>
-            <p><strong>Number of Guests:</strong> {num_guests}</p>
+            <p><strong>Check In Date:</strong> {arrival_date}</p>
+            <p><strong>Chekc Out Date:</strong> {departure_date}</p>
             <br>
             <p>We are pleased to inform you that a refund in the amount of {refund_amount} has been initiated. The refund will be processed according to the original payment method used during the reservation.</p>
             <br>
             <p><strong>Additional Notes:</strong></p>
-            <p>{rejection_notes}</p>
+            <p>{additional_notes}</p>
             <br>
             <p>If you have any further questions or concerns, please do not hesitate to reach out to us. We value your patronage and look forward to the opportunity to serve you in the future.</p>
             <br>
             <p>Thank you for choosing R & V Private Resort.</p>
             <br>
-            <p>Warm regards,</p>
-            <p>[Resort Manager's Name]</p>
-            <p>[Resort Name]</p>
-            <p>[Resort Contact Information]</p>
+        </body>
+        </html>
+        """
+
+        return html_template
+
+    def generate_check_out_thank_you_email(self, customer_name, reservation_id):
+        html_template = f"""
+        <html>
+        <head></head>
+        <body>
+            <p><strong>Subject:</strong> Thank You for Your Stay - Feedback Request</p>
+            <br>
+            <p>Dear {customer_name},</p>
+            <br>
+            <p>Thank you for choosing R & V Private Resort as your accommodation during your recent stay. We hope you had a wonderful experience and enjoyed your time with us.</p>
+            <br>
+            <p>We value your feedback and would greatly appreciate it if you could take a moment to share your experience with us. Your valuable input will help us improve and provide even better services to our future guests.</p>
+            <br>
+            <p>Please click on the link below to leave a review:</p>
+            <p><a href="{self.origin}/review/{reservation_id}">Review for your Experience</a></p>
+            <br>
+            <p>We genuinely appreciate your time and feedback. Thank you once again for choosing R & V Private Resort. We look forward to serving you again in the future.</p>
+            <br>
+        </body>
+        </html>
+        """
+
+        return html_template
+
+    def generate_payment_accepted_email(self, customer_name, reservation_number, payment_amount):
+        html_template = f"""
+        <html>
+        <head></head>
+        <body>
+            <p><strong>Subject:</strong> Payment Accepted - Reservation {reservation_number}</p>
+            <br>
+            <p>Dear {customer_name},</p>
+            <br>
+            <p>Thank you for your recent payment for reservation {reservation_number} at R & V Private Resort.</p>
+            <br>
+            <p>We are pleased to inform you that your payment of {payment_amount} has been successfully accepted.</p>
+            <br>
+            <p>Payment Details:</p>
+            <ul>
+                <li>Reservation Number: {reservation_number}</li>
+                <li>Payment Amount: {payment_amount}</li>
+            </ul>
+            <br>
+            <p>If you have any questions or require any further assistance regarding your reservation, please do not hesitate to contact us. We look forward to welcoming you to R & V Private Resort and ensuring a delightful stay for you.</p>
+            <br>
+            <p>Thank you for choosing R & V Private Resort.</p>
+            <br>
         </body>
         </html>
         """

@@ -6,6 +6,7 @@ from app.schemas.users import UserModel
 from app.database.database import DatabaseDep
 from app.database import tables
 from app.utils.deps import get_current_active_user
+from app.utils.mailer import Mailer
 
 router = APIRouter()
 
@@ -13,13 +14,13 @@ router = APIRouter()
 @router.get(
     '', 
     summary='get all cancel reservations', 
-    response_model=List[NewReservationCancellation]
+    response_model=List[ReservationCancellationSchema]
 )
 async def get_all_cancel_reservation_request(db: DatabaseDep,
                                  user: UserModel = Depends(get_current_active_user)):
     all_entrace_fee = []
     for package in db.query(tables.CancelRequest):
-        all_entrace_fee.append(ReservationCancellation(**package.__dict__)) # type: ignore
+        all_entrace_fee.append(ReservationCancellationSchema(**package.__dict__)) # type: ignore
 
     return all_entrace_fee
 
@@ -65,7 +66,7 @@ async def create_new_cancellation_request(db: DatabaseDep, payload:
     return db_cancellation_request
 
 
-@router.post(
+@router.put(
     '/status/{id}', 
     summary='change ', 
     # response_model=
@@ -82,9 +83,19 @@ async def change_request_status(db: DatabaseDep,
             detail="Reservation cancellation with the supplied ID doesn't exists"
         )
     
+    found.refund_amount = payload.refund_amount #type: ignore
     found.status = payload.status #type: ignore
     found.notes = payload.notes #type: ignore
     db.commit()
+
+    db_reservation = db.query(tables.Reservation).filter(tables.Reservation.id == found.reservation_id).first()
+    db_reservation.payment = db_reservation.total_amount - found.refund_amount
+    db.commit()
+
+    mailer = Mailer()
+    content = mailer.generate_rejected_cancellation_response_email(id, db_reservation.arrival, db_reservation.departure, found.notes) if found.status == 'rejected' else mailer.generate_accepted_cancellation_response_email(id, db_reservation.arrival, db_reservation.departure, found.refund_amount, found.notes) #type: ignore
+
+    mailer.send(db_reservation.email, "Reservation Cancellation Request", content)
 
     return found
 

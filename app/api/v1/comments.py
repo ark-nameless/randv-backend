@@ -28,7 +28,7 @@ async def get_all_reviews(db: DatabaseDep):
     # response_model=
 )
 async def create_new_comment(db: DatabaseDep, payload: NewCommentSchema = Body(...)):
-    new_comment = tables.CancelRequest(**dict(payload))
+    new_comment = tables.Comment(**dict(payload))
 
     db.add(new_comment)
     db.commit()

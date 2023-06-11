@@ -23,7 +23,7 @@ async def get_all_review(db: DatabaseDep, user: UserModel = Depends(get_current_
     return all_entrace_fee
 
 @router.post(
-    '/', 
+    '', 
     summary='create new review', 
     # response_model=
 )
