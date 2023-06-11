@@ -1,6 +1,6 @@
 from typing import List
 from uuid import UUID
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 
 class TokenSchema(BaseModel):
     access_token: str
@@ -44,6 +44,12 @@ class UserModel(BaseModel):
 
     class Config:
         orm_mode = True
+
+class ForgetUserPassword(BaseModel):
+    email: EmailStr
+
+class PasswordReset(BaseModel):
+    password: str
 
 
 class UserAuth(BaseModel):

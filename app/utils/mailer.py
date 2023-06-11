@@ -305,3 +305,29 @@ class Mailer:
         """
 
         return html_template
+    
+
+    def generate_password_reset_email(self, staff_name, token):
+        html_template = f"""
+        <html>
+        <head></head>
+        <body>
+            <p><strong>Subject:</strong> Staff Password Reset Request</p>
+            <br>
+            <p>Dear {staff_name},</p>
+            <br>
+            <p>We have received a request to reset your password for your staff account at R & V Private Resort.</p>
+            <br>
+            <p>To proceed with the password reset, please click on the link below:</p>
+            <p><a href="{self.origin}/reset-password/{token}">Password Reset Link</a></p>
+            <br>
+            <p>If you did not request a password reset, please ignore this email.</p>
+            <br>
+            <p>If you require any further assistance or have any questions, please contact our support team. We are here to assist you.</p>
+            <br>
+            <p>Thank you for being a valued member of the R & V Private Resort staff.</p>
+            <br>
+        </html>
+        """
+
+        return html_template
