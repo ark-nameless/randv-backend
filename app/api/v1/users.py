@@ -35,7 +35,7 @@ async def get_all_users(db: DatabaseDep, user: UserModel = Depends(get_current_a
     return all_users
 
 @router.post('/signup', summary="Create new user",)
-async def create_user(payload: RegisterUser, db: DatabaseDep):
+async def create_user(payload: RegisterUser, db: DatabaseDep, user: UserModel = Depends(get_current_active_user)):
     # querying database to check if user already exist
     user = db.query(tables.User).filter(tables.User.email == payload.email or tables.User.username == payload.username).first()
     if user is not None:
