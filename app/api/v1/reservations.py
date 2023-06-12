@@ -46,7 +46,7 @@ def str_to_datetime(val):
 def str_to_date(val):
     return datetime.strptime(val.split(' ')[0], '%m/%d/%Y')
 
-def date_in_range(arrival1, departure1, arrival2,  departure2):
+def date_in_two_range(arrival1, departure1, arrival2,  departure2):
     return str_to_date(arrival1) <= str_to_date(arrival2) < str_to_date(departure1) or \
     str_to_date(arrival1) <= str_to_date(departure2) < str_to_date(departure1) or \
     str_to_date(arrival2) <= str_to_date(arrival1) < str_to_date(departure2) or \
@@ -125,7 +125,7 @@ async def check_if_reservation_is_available(db: DatabaseDep, payload: dict = Bod
         for reservation in db_reservations:
             # print(f'{str_to_date(reservation.arrival)} <= {str_to_date(arrival)} <= {str_to_date(reservation.departure)}')
 
-            if date_in_range(reservation.arrival, reservation.departure, arrival, departure):
+            if date_in_two_range(reservation.arrival, reservation.departure, arrival, departure):
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
                     detail="Reservation with Selected date and time isn't available, please selecte new date or time"
@@ -203,7 +203,7 @@ async def check_if_reservation_is_available(db: DatabaseDep, payload: dict = Bod
                         print("date_in_range(reservation_plan['start_time'], reservation_plan['end_time'], departure): package")
                         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Reservation with Selected date and time isn't available, please selecte new date or time")
                     
-                if date_in_range(reservation.arrival, reservation.departure, arrival, departure):
+                if date_in_two_range(reservation.arrival, reservation.departure, arrival, departure):
                     if reservation.selected_time == 'whole' or reservation.selected_time == payload['selected_time'] or \
                         payload['selected_time'] == 'whole':
                         raise HTTPException(
@@ -220,7 +220,6 @@ async def check_if_reservation_is_available(db: DatabaseDep, payload: dict = Bod
     # response_model=NewReservationIndividualSchema
 )
 async def create_new_package_reservation(db: DatabaseDep, 
-                                         id: str, 
                                          payload: NewPackageReservationSchema):
     arrival = payload.arrival
     departure = payload.departure if payload.departure else payload.arrival
@@ -235,10 +234,10 @@ async def create_new_package_reservation(db: DatabaseDep,
         'type': 'package',
 
         'arrival': datetime.strftime(get_datetime(payload.selected_time, arrival, 'start'), '%m/%d/%Y %I:%M %p'),
-        'departure': datetime.strftime(get_datetime(payload.selected_time, arrival, 'end'), '%m/%d/%Y %I:%M %p'),
+        'departure': datetime.strftime(get_datetime(payload.selected_time, departure, 'end'), '%m/%d/%Y %I:%M %p'),
 
         'selected_time': payload.selected_time,
-        'total_amount': selected_plan['price'], # type: ignore
+        'total_amount': payload.total_amount,
         'reference_no': payload.reference_no,
         'package_id': payload.package_id,
     }

@@ -93,7 +93,11 @@ async def change_request_status(db: DatabaseDep,
     db.commit()
 
     mailer = Mailer()
-    content = mailer.generate_rejected_cancellation_response_email(id, db_reservation.arrival, db_reservation.departure, found.notes) if found.status == 'rejected' else mailer.generate_accepted_cancellation_response_email(id, db_reservation.arrival, db_reservation.departure, found.refund_amount, found.notes) #type: ignore
+    content = ''
+    if found.status == 'rejected':
+        content = mailer.generate_rejected_cancellation_response_email(db_reservation.customer_name, id, db_reservation.arrival, db_reservation.departure, found.notes)
+    else:
+        content = mailer.generate_accepted_cancellation_response_email(db_reservation.customer_name, id, db_reservation.arrival, db_reservation.departure, found.refund_amount, found.notes) #type: ignore
 
     mailer.send(db_reservation.email, "Reservation Cancellation Request", content)
 
