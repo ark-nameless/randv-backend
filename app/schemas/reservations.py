@@ -24,6 +24,7 @@ class NewPackageReservationSchema(BaseModel):
     reference_no: constr(min_length=2) # type: ignore
     selected_time: constr(min_length=2) # type: ignore
     total_amount: int #
+    address: str = ''
 
 class NewReservationCancellation(BaseModel):
     reservation_id: constr(min_length=6)
@@ -38,6 +39,10 @@ class SetReservationPayment(BaseModel):
     payed: bool
     payment: int
     total_amount: int
+
+class CheckInSchema(BaseModel):
+    guest_count: int
+    address: str = ''
 
 # class EntraceFeeSchema(NewEntraceFeeSchema):
 #     id: UUID

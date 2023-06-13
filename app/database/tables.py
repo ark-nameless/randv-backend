@@ -77,6 +77,7 @@ class Reservation(Base):
     customer_name = Column(String)
     email = Column(String)
     contact_no = Column(String)
+    address = Column(String, default="")
 
     type = Column(String)
     package_id = Column(String, nullable=True)

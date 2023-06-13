@@ -3,7 +3,7 @@ from collections import defaultdict
 
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Body, Depends, status, HTTPException
-from app.schemas.reservations import NewReservationIndividualSchema, NewPackageReservationSchema, SetReservationPayment
+from app.schemas.reservations import NewPackageReservationSchema, SetReservationPayment, CheckInSchema
 from app.schemas.users import UserModel
 from app.database.database import DatabaseDep
 from app.exceptions.exceptions import JSONException
@@ -43,8 +43,8 @@ def get_datetime(session, date, time):
 def str_to_datetime(val):
     return datetime.strptime(val, '%m/%d/%Y %I:%M %p')
 
-def str_to_date(val):
-    return datetime.strptime(val.split(' ')[0], '%m/%d/%Y')
+def str_to_date(val, sep='/'):
+    return datetime.strptime(val.split(' ')[0], f'%m{sep}%d{sep}%Y')
 
 def date_in_two_range(arrival1, departure1, arrival2,  departure2):
     return str_to_date(arrival1) <= str_to_date(arrival2) < str_to_date(departure1) or \
@@ -321,7 +321,11 @@ async def create_new_individual_reservation(db: DatabaseDep, payload: dict = Bod
     '/checkin/{id}', 
     summary='set current timestamp to customer checkin status', 
 )
-async def check_in_guest_with_id(id: str, db: DatabaseDep, user: UserModel = Depends(get_current_active_user)):
+async def check_in_guest_with_id(
+    id: str, db: DatabaseDep, 
+    payload: CheckInSchema = Body(...),
+    user: UserModel = Depends(get_current_active_user)):
+
     db_reservation = db.query(tables.Reservation).filter(tables.Reservation.id == id).first()
 
     if not db_reservation:
@@ -331,6 +335,8 @@ async def check_in_guest_with_id(id: str, db: DatabaseDep, user: UserModel = Dep
         )
     
     db_reservation.checked_in = datetime.now()
+    db_reservation.guest_count = payload.guest_count
+    db_reservation.address = payload.address
     db.commit()
     return []
 

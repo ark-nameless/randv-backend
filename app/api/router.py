@@ -9,6 +9,7 @@ from app.api.v1 import reservations
 from app.api.v1 import cancel_reservations
 from app.api.v1 import comments
 from app.api.v1 import reviews
+from app.api.v1 import reports
 from app.api.v1 import test
 
 api_router = APIRouter()
@@ -22,4 +23,5 @@ api_router.include_router(reservations.router, prefix="/reservation", tags=['Res
 api_router.include_router(cancel_reservations.router, prefix="/cancel", tags=['Resort Reservation Cancellation Management'])
 api_router.include_router(comments.router, prefix="/comments", tags=['Resort Comments Management'])
 api_router.include_router(reviews.router, prefix="/reviews", tags=['Resort Reviews Management'])
+api_router.include_router(reports.router, prefix="/reports", tags=['Resort Report Tools'])
 api_router.include_router(test.router, prefix="/tests", tags=['Test Endpoints'])
