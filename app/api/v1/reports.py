@@ -14,10 +14,10 @@ from sqlalchemy import select, func
 
 
 def str_to_date(val, sep='/'):
-    return datetime.strptime(val.split(' ')[0], f'%d{sep}%m{sep}%Y')
+    return datetime.strptime(val.split(' ')[0], f'%m{sep}%d{sep}%Y')
 
 def db_str_to_date(val, sep='/'):
-    return datetime.strptime(val.split(' ')[0], f'%m{sep}%d{sep}%Y')
+    return datetime.strptime(val.split(' ')[0], f'%d{sep}%m{sep}%Y')
 
 
 router = APIRouter()
@@ -56,8 +56,8 @@ async def get_all_address_by_reservation(db: DatabaseDep, user: UserModel = Depe
     '/address/{start}/{end}'
 )
 async def get_all_address_by_reservation(start: str, end: str, db: DatabaseDep, user: UserModel = Depends(get_current_active_user)):
-    start_year = start[6:10]
-    end_year = end[6:10]
+    start_year = start.split('-')[-1]
+    end_year = end.split('-')[-1]
 
     all_addresses = db.query(
         tables.Reservation
@@ -83,8 +83,8 @@ async def get_all_address_by_reservation(start: str, end: str, db: DatabaseDep, 
     '/reservations/{start}/{end}'
 )
 async def get_all_reservations_by_date_range(start: str, end: str, db: DatabaseDep, user: UserModel = Depends(get_current_active_user)):
-    start_year = start[5:9]
-    end_year = end[5:9]
+    start_year = start.split('-')[-1]
+    end_year = end.split('-')[-1]
 
     all_addresses = db.query(
         tables.Reservation
@@ -98,11 +98,8 @@ async def get_all_reservations_by_date_range(start: str, end: str, db: DatabaseD
     print(f'start: {date_start}, end: {date_end}')
     result = []
     for row in all_addresses:
-        print(f'{date_start} <= {str_to_date(row.arrival)} <= {date_end}')
-        print(f'{date_start} <= {str_to_date(row.departure)} <= {date_end}')
         if date_start <= str_to_date(row.arrival) <= date_end and \
             date_start <= str_to_date(row.departure) <= date_end:
-            print('right')
             result.append({
                 'customer_name': row.customer_name,
                 'guest_count': row.guest_count | 0,
