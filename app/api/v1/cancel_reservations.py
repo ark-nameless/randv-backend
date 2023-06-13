@@ -24,6 +24,18 @@ async def get_all_cancel_reservation_request(db: DatabaseDep,
 
     return all_entrace_fee
 
+@router.get(
+    '/actionable', 
+    summary='get all cancel reservations with actionable status', 
+)
+async def get_all_cancellation_request_with_actinable_status(db: DatabaseDep,
+                                 user: UserModel = Depends(get_current_active_user)):
+    all_entrace_fee = []
+    for package in db.query(tables.CancelRequest).filter(tables.CancelRequest.status == 'actionable'):
+        all_entrace_fee.append(ReservationCancellationSchema(**package.__dict__)) # type: ignore
+
+    return all_entrace_fee
+
 
 @router.post(
     '', 
