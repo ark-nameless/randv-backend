@@ -17,7 +17,7 @@ def str_to_date(val, sep='/'):
     return datetime.strptime(val.split(' ')[0], f'%d{sep}%m{sep}%Y')
 
 def link_str_to_date(val):
-    return datetime.strptime(val.split(' ')[0], f'%m-%d-%Y')
+    return datetime.strptime(val.split(' ')[0], f'%d-%m-%Y')
 
 # def db_str_to_date(val, sep='/'):
 #     return datetime.strptime(val.split(' ')[0], f'%m{sep}%d{sep}%Y')
