@@ -14,10 +14,10 @@ from sqlalchemy import select, func
 
 
 def str_to_date(val, sep='/'):
-    return datetime.strptime(val.split(' ')[0], f'%m{sep}%d{sep}%Y')
-
-def db_str_to_date(val, sep='/'):
     return datetime.strptime(val.split(' ')[0], f'%d{sep}%m{sep}%Y')
+
+# def db_str_to_date(val, sep='/'):
+#     return datetime.strptime(val.split(' ')[0], f'%m{sep}%d{sep}%Y')
 
 
 router = APIRouter()
@@ -71,8 +71,8 @@ async def get_all_address_by_reservation(start: str, end: str, db: DatabaseDep, 
     print(start_year)
     for row in all_addresses:
         print(row)
-        if date_start <= db_str_to_date(row.arrival) <= date_end and \
-            date_start <= db_str_to_date(row.departure) <= date_end:
+        if date_start <= str_to_date(row.arrival) <= date_end and \
+            date_start <= str_to_date(row.departure) <= date_end:
             result[row.address] += 1
     
     return result
