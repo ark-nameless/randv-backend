@@ -14,7 +14,7 @@ from sqlalchemy import select, func
 
 
 def str_to_date(val, sep='/'):
-    return datetime.strptime(val.split(' ')[0], f'%d{sep}%m{sep}%Y')
+    return datetime.strptime(val.split(' ')[0], f'%m{sep}%d{sep}%Y')
 
 def link_str_to_date(val):
     return datetime.strptime(val.split(' ')[0], f'%d-%m-%Y')
