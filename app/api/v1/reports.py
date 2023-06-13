@@ -55,9 +55,8 @@ async def get_all_address_by_reservation(db: DatabaseDep, user: UserModel = Depe
 @router.get(
     '/address/{start}/{end}'
 )
-async def get_all_address_by_reservation(start: str, end: str, db: DatabaseDep, user: UserModel = Depends(get_current_active_user)):
+async def get_all_address_by_date_range(start: str, end: str, db: DatabaseDep, user: UserModel = Depends(get_current_active_user)):
     start_year = start.split('-')[-1]
-    end_year = end.split('-')[-1]
 
     all_addresses = db.query(
         tables.Reservation
@@ -68,9 +67,7 @@ async def get_all_address_by_reservation(start: str, end: str, db: DatabaseDep, 
     date_start = str_to_date(start, '-')
     date_end = str_to_date(end, '-')
     result = defaultdict(int)
-    print(start_year)
     for row in all_addresses:
-        print(row)
         if date_start <= str_to_date(row.arrival) <= date_end and \
             date_start <= str_to_date(row.departure) <= date_end:
             result[row.address] += 1
@@ -84,7 +81,6 @@ async def get_all_address_by_reservation(start: str, end: str, db: DatabaseDep, 
 )
 async def get_all_reservations_by_date_range(start: str, end: str, db: DatabaseDep, user: UserModel = Depends(get_current_active_user)):
     start_year = start.split('-')[-1]
-    end_year = end.split('-')[-1]
 
     all_addresses = db.query(
         tables.Reservation
@@ -94,8 +90,6 @@ async def get_all_reservations_by_date_range(start: str, end: str, db: DatabaseD
     
     date_start = str_to_date(start, '-')
     date_end = str_to_date(end, '-')
-    
-    print(f'start: {date_start}, end: {date_end}')
     result = []
     for row in all_addresses:
         if date_start <= str_to_date(row.arrival) <= date_end and \
