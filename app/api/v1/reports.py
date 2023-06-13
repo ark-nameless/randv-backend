@@ -16,6 +16,9 @@ from sqlalchemy import select, func
 def str_to_date(val, sep='/'):
     return datetime.strptime(val.split(' ')[0], f'%m{sep}%d{sep}%Y')
 
+def link_str_to_date(val):
+    return datetime.strptime(val.split(' ')[0], f'%m-%d-%Y')
+
 # def db_str_to_date(val, sep='/'):
 #     return datetime.strptime(val.split(' ')[0], f'%m{sep}%d{sep}%Y')
 
@@ -64,9 +67,10 @@ async def get_all_address_by_date_range(start: str, end: str, db: DatabaseDep, u
             tables.Reservation.payed == True, tables.Reservation.arrival.contains(start_year)
         ).all()
     
-    date_start = str_to_date(start, '-')
-    date_end = str_to_date(end, '-')
+    date_start = link_str_to_date(start)
+    date_end = link_str_to_date(end)
     result = defaultdict(int)
+    print(end)
     for row in all_addresses:
         if date_start <= str_to_date(row.arrival) <= date_end and \
             date_start <= str_to_date(row.departure) <= date_end:
